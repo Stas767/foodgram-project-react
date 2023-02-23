@@ -33,6 +33,7 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     '''Модель ингридиентов.'''
+
     name = models.CharField(
         'Название',
         max_length=200
@@ -52,6 +53,7 @@ class Ingredient(models.Model):
 
 class Recipe(models.Model):
     '''Модель рецептов.'''
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
