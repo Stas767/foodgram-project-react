@@ -20,15 +20,9 @@ class CustomUser(AbstractUser):
     )
 
     class Meta:
+        ordering = [('pk')]
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
         return f'{self.username} - {self.first_name} {self.last_name}'
-
-# Нужно организовать флаг
-    # @property
-    # def is_subscribed(self):
-
-    #     return bool(self.role == ADMIN
-    #                 or self.is_superuser)
