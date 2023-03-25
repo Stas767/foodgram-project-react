@@ -3,15 +3,20 @@ import csv
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.db.models import Sum
+from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly
+)
 from rest_framework.response import Response
 
 from api import serializers
+from api.permissions import IsAuthorOrReadOnly
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Subscription, Tag)
 
@@ -34,7 +39,11 @@ class CustomUserViewSet(UserViewSet):
         )
         return self.get_paginated_response(serializer.data)
 
-    @action(detail=True, methods=('post', 'delete'))
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated, )
+    )
     def subscribe(self, request, id=None):
         '''Логика подписки/отписки на конкретного пользователя.'''
 
@@ -78,12 +87,19 @@ class CustomUserViewSet(UserViewSet):
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
+    permission_classes = (IsAuthorOrReadOnly, )
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = (
+        # 'is_favorited', 'is_in_shopping_cart',
+        'author', 'tags',
+    )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -91,7 +107,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(author=self.request.user)
 
-    @action(detail=True, methods=('post', 'delete'))
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated, )
+    )
     def favorite(self, request, pk=None):
         '''Логика добавления/удаления рецепта в избранное.'''
 
@@ -128,7 +148,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_204_NO_CONTENT
             )
 
-    @action(detail=True, methods=('post', 'delete'))
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        permission_classes=(IsAuthenticated, )
+    )
     def shopping_cart(self, request, pk=None):
         '''Логика добавления/удаления рецепта в список покупок.'''
 
@@ -165,7 +189,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_204_NO_CONTENT
             )
 
-    @action(detail=False)
+    @action(detail=False, permission_classes=(IsAuthenticated, ))
     def download_shopping_cart(self, request):
         '''Загрузить список покупок в pdf.'''
 
@@ -193,3 +217,5 @@ class RecipeViewSet(viewsets.ModelViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = serializers.TagSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = None
