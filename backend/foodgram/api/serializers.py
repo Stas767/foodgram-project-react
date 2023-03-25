@@ -1,15 +1,10 @@
-from djoser.serializers import UserCreateSerializer, UserSerializer
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_base64.fields import Base64ImageField
+from rest_framework import serializers
 
-from recipes.models import (
-    Ingredient,
-    IngredientRecipe,
-    Recipe,
-    Tag,
-    Subscription
-)
+from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Subscription, Tag)
 
 
 User = get_user_model()
@@ -79,6 +74,19 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
+class FavoriteShoppingCartSerializer(serializers.ModelSerializer):
+    '''Избранное.'''
+
+    id = serializers.IntegerField(source='recipe.id')
+    name = serializers.CharField(source='recipe.name')
+    image = Base64ImageField(source='recipe.image')
+    cooking_time = serializers.IntegerField(source='recipe.cooking_time')
+
+    class Meta:
+        model = Favorite
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -101,12 +109,14 @@ class RecipeSerializer(PreviewRecipeSerializer):
 
     author = CustomUserSerializer(read_only=True)
     ingredients = IngredientRecipeSerializer(source='recipes', many=True)
+    is_favorited = serializers.SerializerMethodField(read_only=True)
+    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Recipe
         fields = (
             'id', 'tags', 'author', 'ingredients',
-            # 'is_favorited', 'is_in_shopping_cart',
+            'is_favorited', 'is_in_shopping_cart',
             'name', 'image', 'text', 'cooking_time'
         )
 
@@ -138,6 +148,7 @@ class RecipeSerializer(PreviewRecipeSerializer):
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time
         )
+
         if 'tags' in validated_data:
             tags = validated_data.pop('tags')
             instance.tags.set(tags)
@@ -154,6 +165,26 @@ class RecipeSerializer(PreviewRecipeSerializer):
                 )
         instance.save()
         return instance
+
+    def get_is_favorited(self, obj):
+        '''Проверка - добавлен ли рецепт в избранное.'''
+
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return Favorite.objects.filter(
+                user=user, recipe=obj
+            ).select_related().exists()
+        return False
+
+    def get_is_in_shopping_cart(self, obj):
+        '''Проверка - добавлен ли рецепт в список покупок.'''
+
+        user = self.context['request'].user
+        if user.is_authenticated:
+            return ShoppingCart.objects.filter(
+                user=user, recipe=obj
+            ).select_related().exists()
+        return False
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
