@@ -5,6 +5,8 @@ from django.db import models
 class CustomUser(AbstractUser):
     '''Расширенная пользовательская модель.'''
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ('username', 'first_name', 'last_name', )
     email = models.EmailField(
         'Адрес электронной почты',
         unique=True,
