@@ -74,7 +74,7 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
-class FavoriteShoppingCartSerializer(serializers.ModelSerializer):
+class FavoriteSerializer(serializers.ModelSerializer):
     '''Избранное.'''
 
     id = serializers.IntegerField(source='recipe.id')
@@ -84,6 +84,14 @@ class FavoriteShoppingCartSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Favorite
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class ShoppingCartSerializer(FavoriteSerializer):
+    '''Список покупок.'''
+
+    class Meta:
+        model = ShoppingCart
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
