@@ -10,6 +10,10 @@ RUN python3 -m pip install --upgrade pip --no-cache-dir
 
 RUN pip3 install -r requirements.txt --no-cache-dir
 
-# RUN python manage.py collectstatic --no-input
+RUN python3 manage.py migrate
+
+RUN python3 manage.py loaddata dump_data.json
+
+RUN python3 manage.py collectstatic --no-input
 
 CMD ["gunicorn", "foodgram.wsgi:application", "--bind", "0:8000"] 
