@@ -1,6 +1,3 @@
-from api import serializers
-from api.filters import RecipeFilter
-from api.permissions import IsAuthorOrReadOnly
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.db.models import Sum
@@ -8,18 +5,25 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
-                            ShoppingCart, Subscription, Tag)
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 
+from api import serializers
+from api.filters import RecipeFilter
+from api.permissions import IsAuthorOrReadOnly
+from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
+                            ShoppingCart, Subscription, Tag)
+
+
 User = get_user_model()
 
 
 class CustomUserViewSet(UserViewSet):
+    '''Расширенный пользовательский вьюсет.'''
+
     queryset = User.objects.all()
     serializer_class = serializers.CustomUserSerializer
 
@@ -81,6 +85,8 @@ class CustomUserViewSet(UserViewSet):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    '''Ингредиенты.'''
+
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -88,6 +94,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
+    '''Рецепты.'''
+
     queryset = Recipe.objects.all()
     serializer_class = serializers.RecipeSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -191,7 +199,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, permission_classes=(IsAuthenticated, ))
     def download_shopping_cart(self, request):
-        '''Загрузить список покупок в pdf.'''
+        '''Загрузить список покупок в txt.'''
 
         ingredients = (
             IngredientRecipe.objects
@@ -215,6 +223,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    '''Теги.'''
+
     queryset = Tag.objects.all()
     serializer_class = serializers.TagSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)

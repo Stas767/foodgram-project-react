@@ -1,14 +1,18 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_base64.fields import Base64ImageField
+from rest_framework import serializers
+
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Subscription, Tag)
-from rest_framework import serializers
+
 
 User = get_user_model()
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
+    '''Кастомная модель создания польз-ля.'''
+
     password = serializers.CharField(
         style={"input_type": "password"}, write_only=True
     )
@@ -26,6 +30,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 
 class CustomUserSerializer(UserSerializer):
+    '''Кастомная модель польз-ля.'''
 
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
@@ -52,6 +57,7 @@ class CustomUserSerializer(UserSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    '''Ингридиенты.'''
 
     class Meta:
         model = Ingredient
@@ -59,6 +65,8 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeSerializer(serializers.ModelSerializer):
+    '''Сериализатор для связанной моедли IngredientRecipe.'''
+
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(), source='ingredient.id'
     )
@@ -94,6 +102,7 @@ class ShoppingCartSerializer(FavoriteSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    '''Теги.'''
 
     class Meta:
         model = Tag

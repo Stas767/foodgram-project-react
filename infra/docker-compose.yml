@@ -9,10 +9,10 @@ services:
       - ./.env
 
   backend:
-    # image: stack767/foodgram:latest
-    build:
-      context: ../backend/foodgram/
-      dockerfile: Dockerfile
+    image: stack767/foodgram:latest
+    # build:
+    #   context: ../backend/foodgram/
+    #   dockerfile: Dockerfile
     restart: always
     volumes:
       - backend_static:/foodgram/static_backend/
