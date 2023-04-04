@@ -1,5 +1,3 @@
-import csv
-
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.db.models import Sum
@@ -7,7 +5,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from rest_framework import status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (
     IsAuthenticated,
@@ -16,6 +14,7 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 
 from api import serializers
+from api.filters import RecipeFilter
 from api.permissions import IsAuthorOrReadOnly
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Subscription, Tag)
@@ -88,6 +87,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = serializers.IngredientSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -95,17 +95,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.RecipeSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
     permission_classes = (IsAuthorOrReadOnly, )
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = (
-        # 'is_favorited', 'is_in_shopping_cart',
-        'author', 'tags',
-    )
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter,)
+    filterset_class = RecipeFilter
+    search_fields = ('^ingredients__name',)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
     def perform_update(self, serializer):
         serializer.save(author=self.request.user)
+
+    def get_pagination_class(self):
+        if self.action == 'list':
+            return self.pagination_class()
+        return None
 
     @action(
         detail=True,
@@ -128,7 +131,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            serializer = serializers.FavoriteShoppingCartSerializer(
+            serializer = serializers.FavoriteSerializer(
                 favorite, context={'request': request}
             )
             return Response(
@@ -169,7 +172,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            serializer = serializers.FavoriteShoppingCartSerializer(
+            serializer = serializers.ShoppingCartSerializer(
                 shopping_cart, context={'request': request}
             )
             return Response(
@@ -201,16 +204,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
             .order_by()
         )
 
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="shop_list.csv"'
-        writer = csv.writer(response)
-        writer.writerow(['Список покупок:'])
-        writer.writerow([' '])  # добавить пустую строку
+        shop_list = []
+        shop_list.append('Список покупок: \n')
         for ingredient in ingredients:
             name = ingredient['ingredient__name']
             measurement_unit = ingredient['ingredient__measurement_unit']
             amount = ingredient['amount']
-            writer.writerow([f'{name} - {amount} {measurement_unit}'])
+            shop_list.append(f'\n{name} - {amount} {measurement_unit}')
+        response = HttpResponse(shop_list, content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="shop_list.txt"'
         return response
 
 
