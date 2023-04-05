@@ -1,11 +1,20 @@
 import os
+from pathlib import Path
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from dotenv import load_dotenv
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv(
     'DJANGO_SECRET_KEY', default='4wf+d&6@qa87!svo503-j(l5r)2&k*y#thog+t+#2s$xv(zu7v')
 
 DEBUG = False
+
+if DEBUG:
+    load_dotenv(BASE_DIR.parent.joinpath('infra/.env'))
+else:
+    load_dotenv()
 
 
 ALLOWED_HOSTS = ['*']
@@ -67,7 +76,7 @@ if DEBUG:
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
+            'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.postgresql'),
             'NAME': os.getenv('DB_NAME', default='postgres'),
             'USER': os.getenv('POSTGRES_USER', default='postgres'),
             'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='postgres'),
