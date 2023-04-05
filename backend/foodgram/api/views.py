@@ -17,7 +17,6 @@ from api.permissions import IsAuthorOrReadOnly
 from recipes.models import (Favorite, Ingredient, IngredientRecipe, Recipe,
                             ShoppingCart, Subscription, Tag)
 
-
 User = get_user_model()
 
 
@@ -82,6 +81,8 @@ class CustomUserViewSet(UserViewSet):
                 {'messsage': 'Вы отписались от автора.'},
                 status=status.HTTP_204_NO_CONTENT
             )
+
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -157,6 +158,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_204_NO_CONTENT
             )
 
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     @action(
         detail=True,
         methods=('post', 'delete'),
@@ -197,6 +200,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 {'messsage': 'Рецепт успешно удален из списка покупок.'},
                 status=status.HTTP_204_NO_CONTENT
             )
+
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action(detail=False, permission_classes=(IsAuthenticated, ))
     def download_shopping_cart(self, request):
