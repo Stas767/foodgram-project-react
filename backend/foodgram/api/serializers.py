@@ -168,14 +168,20 @@ class RecipeSerializer(PreviewRecipeSerializer):
 
         if 'recipes' in validated_data:
             recipes = validated_data.pop('recipes')
-            for value in recipes:
-                instance.ingredient = value.get('ingredient')['id']
-                instance.amount = value.get('amount')
-                IngredientRecipe.objects.update(
-                    ingredient=instance.ingredient,
-                    recipe=instance,
-                    amount=instance.amount
+            instance.recipes.all().delete()
+            recipe_ingredient_set = []
+            for item in recipes:
+                ingredient = item.get('ingredient')['id']
+                amount = item.get('amount')
+                recipe_ingredient_set.append(
+                    IngredientRecipe(
+                        recipe=instance, ingredient=ingredient,
+                        amount=amount
+                    )
                 )
+            IngredientRecipe.objects.bulk_create(
+                recipe_ingredient_set, ignore_conflicts=True
+            )
         instance.save()
         return instance
 
