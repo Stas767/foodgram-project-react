@@ -167,21 +167,15 @@ class RecipeSerializer(PreviewRecipeSerializer):
             instance.tags.set(tags)
 
         if 'recipes' in validated_data:
-            recipes = validated_data.pop('recipes')
-            instance.recipes.all().delete()
-            recipe_ingredient_set = []
-            for item in recipes:
-                ingredient = item.get('ingredient')['id']
-                amount = item.get('amount')
-                recipe_ingredient_set.append(
-                    IngredientRecipe(
-                        recipe=instance, ingredient=ingredient,
-                        amount=amount
-                    )
+            IngredientRecipe.objects.filter(recipe=instance).all().delete()
+            ingredients = validated_data.get('recipes')
+            for value in ingredients:
+                ingredient = value.get('ingredient')['id']
+                amount = value.get('amount')
+                IngredientRecipe.objects.create(
+                    recipe=instance, ingredient=ingredient, amount=amount
                 )
-            IngredientRecipe.objects.bulk_create(
-                recipe_ingredient_set, ignore_conflicts=True
-            )
+
         instance.save()
         return instance
 
