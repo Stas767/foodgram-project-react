@@ -40,9 +40,9 @@ class IngredientRecipeAdminInline(admin.TabularInline):
 class RecipeAdmin(admin.ModelAdmin):
 
     readonly_fields = ('favorites', )
-    list_display = ('name', 'author', )
+    list_display = ('name', 'author', 'favorites')
     list_filter = ('author', 'tags', )
-    search_fields = ('name', )
+    search_fields = ('name', 'tags__name')
     search_help_text = 'NAME'
     list_per_page = 50
     inlines = [IngredientRecipeAdminInline, ]
