@@ -5,7 +5,8 @@ from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+SECRET_KEY = os.getenv(
+    'DJANGO_SECRET_KEY', default='4wf+d&6@qa87!svo503-j(l5r)2&k*y#thog+t+#2s$xv(zu7v')
 
 DEBUG = False
 
